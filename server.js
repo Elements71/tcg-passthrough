@@ -1,0 +1,75 @@
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Enable CORS for Google Sheets
+app.use(cors());
+app.use(express.json());
+
+// Endpoint to fetch product listings by ID
+app.get('/api/product/:productId', async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    const response = await axios.post(
+      `https://mp-search-api.tcgplayer.com/v1/product/${productId}/listings`,
+      {
+        filters: {
+          term: {
+            sellerStatus: "Live",
+            "verified-seller": true,
+            channelId: 0,
+            language: ["English"],
+            listingType: ["standard"],
+            condition: ["Near Mint"]
+          },
+          range: {
+            quantity: {
+              gte: 1
+            }
+          },
+          exclude: {
+            channelExclusion: 0
+          }
+        },
+        from: 0,
+        size: 10,
+        sort: {
+          field: "price+shipping",
+          order: "asc"
+        },
+        context: {
+          shippingCountry: "US",
+          cart: {}
+        },
+        aggregations: ["listingType"]
+      },
+      {
+        headers: {
+          'content-type': 'application/json',
+          'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+        }
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching product:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch product data',
+      message: error.message
+    });
+  }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
