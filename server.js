@@ -65,6 +65,40 @@ app.get('/api/product/:productId', async (req, res) => {
   }
 });
 
+// Endpoint to fetch latest sales by ID
+app.get('/api/product/:productId/sales', async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    const response = await axios.post(
+      `https://mpapi.tcgplayer.com/v2/product/${productId}/latestsales`,
+      {
+        conditions: [1],
+        languages: [1],
+        variants: [],
+        listingType: "ListingWithoutPhotos",
+        limit: 5
+      },
+      {
+        headers: {
+          'accept': 'application/json, text/plain, */*',
+          'accept-language': 'en-US,en;q=0.9',
+          'content-type': 'application/json',
+          'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36',
+        }
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Error fetching sales:', error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch sales data',
+      message: error.message
+    });
+  }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
