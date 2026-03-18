@@ -13,6 +13,16 @@ app.use(express.json());
 app.get('/api/product/:productId', async (req, res) => {
   try {
     const { productId } = req.params;
+    const conditionMap = {
+      NM: "Near Mint",
+      LP: "Lightly Played",
+      MP: "Moderately Played",
+      HP: "Heavily Played",
+      DMG: "Damaged"
+    };
+    const conditions = req.query.condition
+      ? [].concat(req.query.condition).map(c => conditionMap[c.toUpperCase()] ?? c)
+      : ["Near Mint"];
 
     const response = await axios.post(
       `https://mp-search-api.tcgplayer.com/v1/product/${productId}/listings`,
@@ -24,7 +34,7 @@ app.get('/api/product/:productId', async (req, res) => {
             channelId: 0,
             language: ["English"],
             listingType: ["standard"],
-            condition: ["Near Mint"]
+            condition: conditions
           },
           range: {
             quantity: {
