@@ -9,6 +9,17 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// API key auth
+app.use((req, res, next) => {
+  if (req.path === '/health') return next();
+  const key = req.headers['x-api-key'] || req.query.apiKey;
+  const validKeys = (process.env.API_KEY || '').split(',').filter(Boolean);
+  if (!validKeys.length || !validKeys.includes(key)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+});
+
 // Endpoint to fetch product listings by ID
 app.get('/api/product/:productId', async (req, res) => {
   try {
